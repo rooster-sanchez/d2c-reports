@@ -1,0 +1,106 @@
+@import "tailwindcss";
+
+/* Default palette — overwritten per-client by scripts/scaffold_report.py. */
+:root {
+  --bg: #F7F5F1;
+  --bg-deep: #EEEAE2;
+  --surface: #FFFFFF;
+  --surface-2: #FAF8F4;
+  --surface-elevated: #FFFFFF;
+  --border: #E5E1D8;
+  --border-strong: #CFC8B9;
+
+  --text-primary: #1F1F1F;
+  --text-secondary: #4A4A47;
+  --text-tertiary: #8A8680;
+
+  --sage: #7A825F;
+  --sage-deep: #5A6345;
+  --sage-soft: #E2E3D6;
+
+  --olive: #4A4E35;
+  --river: #3E6B73;
+  --sand: #C9B896;
+
+  --alert: #C5392B;
+  --alert-soft: #F8E3E0;
+  --success: #4A7C59;
+  --success-soft: #DCE8DE;
+  --warning: #B77E2A;
+  --warning-soft: #F3E8D5;
+
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-display: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-deep: var(--bg-deep);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-sage: var(--sage);
+  --color-sage-deep: var(--sage-deep);
+  --color-sage-soft: var(--sage-soft);
+  --color-olive: var(--olive);
+  --color-river: var(--river);
+  --color-sand: var(--sand);
+  --color-alert: var(--alert);
+  --color-alert-soft: var(--alert-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+
+  --font-sans: var(--font-sans);
+  --font-serif: var(--font-display);
+  --font-mono: var(--font-mono);
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "ss01", "cv11";
+}
+
+body {
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(900px 500px at 88% -5%, rgba(122,130,95,0.10), transparent 60%),
+    radial-gradient(700px 400px at 5% 100%, rgba(201,184,150,0.14), transparent 60%);
+  min-height: 100vh;
+}
+
+::selection {
+  background: var(--sage);
+  color: #FFFFFF;
+}
+
+/* "serif" class kept for backwards-compat in components — maps to display sans.
+   Plus Jakarta Sans is a geometric sans; we rely on weight + size for hierarchy. */
+.serif   { font-family: var(--font-display); letter-spacing: -0.015em; }
+.mono    { font-family: var(--font-mono); }
+.numeric { font-variant-numeric: tabular-nums; letter-spacing: -0.005em; }
+
+.hairline {
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--border-strong) 20%, var(--border-strong) 80%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
