@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 #
-# Install craft-report into the current workspace.
+# Install the d2c-reports skill (/craft-report slash command) into the current workspace.
 # Run from the root of the workspace where you want to use /craft-report.
 #
 # Usage:
-#   bash <(curl -sSL https://raw.githubusercontent.com/{you}/craft-report/main/install.sh)
+#   bash <(curl -sSL https://raw.githubusercontent.com/rooster-sanchez/d2c-reports/main/install.sh)
 
 set -euo pipefail
 
-REPO_URL="${CRAFT_REPORT_REPO:-https://github.com/rooster-sanchez/craft-report.git}"
+REPO_URL="${CRAFT_REPORT_REPO:-https://github.com/rooster-sanchez/d2c-reports.git}"
 BRANCH="${CRAFT_REPORT_BRANCH:-main}"
 
 if [[ ! -d .claude ]]; then

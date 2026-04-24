@@ -1,6 +1,12 @@
-# craft-report
+# d2c-reports
 
 > A Claude Code skill that crafts beautiful, brand-aligned monthly performance reports for DTC e-commerce clients — pulls Meta Ads + Google Ads + Shopify data, computes real MER against a floor, deploys as a Next.js microsite on Vercel. **Conversational**, not a button.
+
+[![Follow on YouTube](https://img.shields.io/badge/YouTube-Rooster__Sanchez-FF0000?logo=youtube&logoColor=white&style=flat-square)](https://www.youtube.com/@Rooster_Sanchez) [![MIT License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
+
+**More free agents, skills, and automations for DTC marketing teams → [youtube.com/@Rooster_Sanchez](https://www.youtube.com/@Rooster_Sanchez)**
+
+---
 
 **What it replaces:** that thing where you spend 4 hours every month copy-pasting numbers from three dashboards into a Google Doc that nobody reads.
 
@@ -83,16 +89,16 @@ Every stage is a standalone script. The orchestration lives in [`skills/craft-re
 
 ```bash
 cd /path/to/your/workspace
-bash <(curl -sSL https://raw.githubusercontent.com/{your-username}/craft-report/main/install.sh)
+bash <(curl -sSL https://raw.githubusercontent.com/rooster-sanchez/d2c-reports/main/install.sh)
 ```
 
 Or manually:
 
 ```bash
-git clone https://github.com/{your-username}/craft-report.git /tmp/craft-report
+git clone https://github.com/rooster-sanchez/d2c-reports.git /tmp/d2c-reports
 mkdir -p .claude/skills .claude/commands
-cp -R /tmp/craft-report/skills/craft-report .claude/skills/
-cp /tmp/craft-report/commands/craft-report.md .claude/commands/
+cp -R /tmp/d2c-reports/skills/craft-report .claude/skills/
+cp /tmp/d2c-reports/commands/craft-report.md .claude/commands/
 ```
 
 ### 2. Add credentials
@@ -189,12 +195,15 @@ Full spec at [`skills/craft-report/SKILL.md`](skills/craft-report/SKILL.md).
 
 **What if my font isn't on Google Fonts?** Pass `--override-font "Your Font"` to `extract_brand.py` or hand-edit `brand.json`. The template's `layout.tsx` reads the `google_fonts_href` field — change it to a different CDN if needed.
 
+## More free agents + skills like this
+
+**→ [Subscribe on YouTube](https://www.youtube.com/@Rooster_Sanchez)** — that's where I drop new AI agents and automations for marketing + growth teams. Free.
+
+If this one saved you time, a star on the repo and a sub on YouTube tells me which ones to build next.
+
 ## Credits
 
-Built by [Rooster Sanchez](https://github.com/rooster-sanchez). If this skill saves you time, the best thank-you is to tell someone about it or star the repo.
-
-Follow the YouTube channel → **{YOUR YOUTUBE URL}**
-Agency: **{YOUR AGENCY URL}**
+Built by [Rooster Sanchez](https://github.com/rooster-sanchez) at **[Sanchez Savage](https://sanchezsavage.com/)**.
 
 ## License
 

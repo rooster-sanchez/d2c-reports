@@ -2,7 +2,7 @@
 
 ## v0.1.0 — 2026-04-24
 
-Initial public release.
+Initial public release as `d2c-reports`.
 
 **Ships:**
 - 10-stage conversational pipeline (`SKILL.md`)
