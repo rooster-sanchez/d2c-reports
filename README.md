@@ -14,21 +14,23 @@
 
 ## What you get
 
-A per-client, per-month Next.js microsite deployed to its own Vercel URL. Every report has the same fourteen sections, automatically populated from live data:
+A per-client, per-month Next.js microsite deployed to its own Vercel URL. The report is **deck-mode** — designed to be walked through by a presenter, not read alone. Sections render in this order, automatically populated from live data:
 
 | Section | Source |
 |---|---|
-| **Hero + MER gauge** — blended MER vs floor/goal, honest when under target | Shopify ÷ paid spend |
-| **Top-of-mind takeaways** — three cards: state, trend, biggest lever | Agent-authored |
-| **Shape of the month** — daily ROAS + 7-day rolling avg | Meta + Google daily |
-| **Audience health (Net New Reach)** — stacked bars, % new line | Meta Graph (reach + cumulative) |
-| **MER trend** — 13 months vs floor/goal | Shopify CSV + paid spend |
-| **What worked / didn't** — ad-set & campaign detail with context notes | Meta ad-sets + Google campaigns |
-| **Channel mix** — spend share / revenue share / ROAS head-to-head | Meta + Google |
-| **Meta table + Google table** — every window, with ROAS deltas | Meta + Google insights |
-| **Week over week** — last 7 vs prior 7 | Meta + Google |
-| **Shopify trend** — trailing 12 months + MTD partial bar | Shopify CSV + MTD snapshot |
+| **Hero eyebrow** — month + date label, no descriptive H1 | Auto |
+| **MER gauge** — blended MER vs floor/goal, status badge, micro-fact tiles | Shopify ÷ paid spend |
+| **MER context chart** — 13-month Shopify revenue bars + dotted MER line vs floor/goal | Shopify CSV + paid spend |
+| **Period cards** — 3 side-by-side cards (last year same month · last closed · current MTD) | Shopify + paid |
+| **Three takeaways** — title-only cards: state, trend, biggest lever | Agent-authored |
+| **Audience health (Net New Reach)** — stacked bars, % new line, derived mini-stats | Meta Graph (reach + cumulative) |
+| **What worked / didn't** — 2-3 high-level **strategic moves** per side (not media-buying tactics) | Agent-authored |
+| **Top Performers · Last 30 Days** — 4 ad cards with image, format badge, ROAS dot | Ad-level Meta pull |
+| **Creative insights** — 2 bullets framed as creative-strategy reads (angle / persona / DNA / risk) | Agent-authored |
+| **Channel mix** — spend share / revenue share / Meta vs Google vs Blended-MER ROAS | Meta + Google |
+| **Channel detail (accordion)** — Meta + Google per-window tables, collapsed by default | Meta + Google insights |
 | **The One Table** — transposed metric × window, baseline-vs-comparison | All of it |
+| **Top 3 priorities** — title-only imperative cards | Agent-authored |
 
 Brand-adapted every time:
 
@@ -167,7 +169,7 @@ Full spec at [`skills/craft-report/SKILL.md`](skills/craft-report/SKILL.md).
 
 ## Customizing
 
-**Different MER targets per client?** Edit `MER_FLOOR` and `MER_GOAL` at the top of [`skills/craft-report/scripts/scaffold_report.py`](skills/craft-report/scripts/scaffold_report.py). v2 will read these from a per-client config.
+**Different MER targets per client?** Drop a `clients/{slug}/configs/mtd_report.json` with `{ "mer_floor": 3.5, "mer_goal": 4.0 }`. The scaffold reads it automatically. Floors are highly category-dependent — durables/high-AOV brands often sit at 1.5–2.5×, high-margin DTC at 3–5×. Set per-client based on contribution-margin math, not the default 2.5/3.0.
 
 **Different sections or ordering?** Edit the template at [`skills/craft-report/_template/src/app/page.tsx`](skills/craft-report/_template/src/app/page.tsx). All future reports inherit the change.
 
@@ -175,10 +177,10 @@ Full spec at [`skills/craft-report/SKILL.md`](skills/craft-report/SKILL.md).
 
 **Adding a new chart/component?** Drop it into `_template/src/components/`, import it in `page.tsx`, add the data field to `data.ts` and the pull logic to `pull_meta.py` or `pull_google.py`. Re-run `/craft-report`.
 
-## Limitations (v0.1)
+## Limitations (v0.2)
 
 - **Shopify is manual.** CSV ingestion works, Shopify API is a TODO. You'll paste a CSV and 3 numbers each run.
-- **MER targets hardcoded.** 2.5 / 3.0 live in the scaffold script. Per-client overrides via memory works today; per-client config file is v0.2.
+- **Top Performers requires an ad-level pull.** The scaffold emits an empty `top_performers` array; populate it from a Meta ad-level Insights query (level=ad, fields include creative + image_url) and download images to `public/top-performers/`. See [`skills/craft-report/LESSONS.md`](skills/craft-report/LESSONS.md) §6.
 - **Font detection is grep-based.** Works for most Shopify themes that use Google Fonts. Custom-hosted webfonts need manual override.
 - **Vercel-only.** Deploys to Vercel. Netlify / Cloudflare Pages would be a fork.
 - **English only.** Copy is English throughout.
