@@ -24,11 +24,15 @@ import {
   meta_lw,
   meta_mtd,
   meta_pw,
+  mtd_days,
+  mtd_label,
   pct,
+  prev_label,
+  prev_days,
 } from "@/lib/data";
 
 // One Table — transposed layout.
-// Rows = metrics (per channel). Columns = windows, with April MTD as the
+// Rows = metrics (per channel). Columns = windows, with the current MTD as the
 // leftmost base column and each comparison column flagged as same-length or
 // different-length (delta-on-dollars is only meaningful for same-length windows).
 
@@ -44,9 +48,9 @@ type Window = {
 
 const BASE: Window = {
   key: "mtd",
-  label: "April MTD",
+  label: `${mtd_label} MTD`,
   range: meta_mtd.range,
-  days: 24,
+  days: mtd_days,
   meta: meta_mtd,
   google: google_mtd,
   blended: blended_mtd,
@@ -73,27 +77,27 @@ const COMPARISONS: Window[] = [
   },
   {
     key: "lm24",
-    label: "Last month · same 24d",
+    label: `Last month · same ${mtd_days}d`,
     range: meta_lm_samewindow.range,
-    days: 24,
+    days: mtd_days,
     meta: meta_lm_samewindow,
     google: google_lm_samewindow,
     blended: blended_lm_samewindow,
   },
   {
     key: "lmfull",
-    label: "Last month · full March",
+    label: `Last month · full ${prev_label}`,
     range: meta_lm_full.range,
-    days: 31,
+    days: prev_days,
     meta: meta_lm_full,
     google: google_lm_full,
     blended: blended_lm_full,
   },
   {
     key: "ly24",
-    label: "Last year · same 24d",
+    label: `Last year · same ${mtd_days}d`,
     range: meta_ly.range,
-    days: 24,
+    days: mtd_days,
     meta: meta_ly,
     google: google_ly,
     blended: blended_ly,

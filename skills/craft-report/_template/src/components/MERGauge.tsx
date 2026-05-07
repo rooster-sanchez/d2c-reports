@@ -7,28 +7,33 @@ import {
   last_closed,
   mer_floor,
   mer_goal,
+  meta as reportMeta,
   mtd_mer,
   mtd_shopify,
 } from "@/lib/data";
 
 /**
- * MER gauge — April MTD (Apr 1–24).
+ * MER gauge — current MTD.
  * MER = Shopify net sales ÷ total paid spend (Meta + Google).
- * All numbers are actual — Shopify net from operator-supplied data, paid spend from Meta + Google APIs.
+ * All number labels (range, last-closed reference) come from data.ts so the
+ * component does not need per-report editing.
  */
 export default function MERGauge() {
   const current = mtd_mer;
-  const max = Math.max(3.5, Math.ceil(current * 10) / 10);
+  const max = Math.max(mer_goal + 0.5, Math.ceil(current * 10) / 10);
   const pctOf = (v: number) => (v / max) * 100;
   const underFloor = current < mer_floor;
   const lastMER = last_closed.mer;
+  const rangeLabel = mtd_shopify.range;
+  const closedLabel = `${last_closed.label} close (reference)`;
+  void reportMeta;
 
   return (
     <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-6 sm:p-8">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-6">
         <div>
           <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--text-tertiary)] font-medium">
-            Blended MER · April 1–24
+            Blended MER · {rangeLabel}
           </div>
           <div className="mt-2 flex items-baseline gap-3 flex-wrap">
             <div
@@ -40,7 +45,7 @@ export default function MERGauge() {
             </div>
             <div className="flex flex-col gap-0.5 pb-2">
               <span className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--text-tertiary)]">
-                vs floor 2.5x
+                vs floor {mer_floor.toFixed(1)}x
               </span>
               <span
                 className={`mono text-sm font-semibold ${
@@ -53,7 +58,7 @@ export default function MERGauge() {
             </div>
             <div className="flex flex-col gap-0.5 pb-2">
               <span className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--text-tertiary)]">
-                vs goal 3.0x
+                vs goal {mer_goal.toFixed(1)}x
               </span>
               <span className="mono text-sm font-semibold text-[color:var(--text-secondary)]">
                 {current >= mer_goal ? "+" : "−"}
@@ -119,13 +124,13 @@ export default function MERGauge() {
         <AxisMark position={0} label="0x" align="left" />
         <AxisMark
           position={pctOf(mer_floor)}
-          label="2.5x"
+          label={`${mer_floor.toFixed(1)}x`}
           sub="Floor"
           subColor="var(--text-primary)"
         />
         <AxisMark
           position={pctOf(mer_goal)}
-          label="3.0x"
+          label={`${mer_goal.toFixed(1)}x`}
           sub="Goal"
           subColor="var(--sage-deep)"
         />
@@ -135,18 +140,8 @@ export default function MERGauge() {
       <div className="mt-10 grid gap-5 md:grid-cols-3">
         <MicroFact label="Paid spend · MTD" value={fmtUSD(blended_mtd.spend)} sub="Meta + Google" />
         <MicroFact label="Shopify net sales · MTD" value={fmtUSD(mtd_shopify.net_sales)} sub={`${mtd_shopify.orders} orders · AOV $${mtd_shopify.aov.toFixed(0)}`} accent />
-        <MicroFact label="March close (reference)" value={fmtROAS(lastMER)} sub={`${fmtUSD(last_closed.shopify_net)} ÷ ${fmtUSD(last_closed.paid_spend)}`} />
+        <MicroFact label={closedLabel} value={fmtROAS(lastMER)} sub={`${fmtUSD(last_closed.shopify_net)} ÷ ${fmtUSD(last_closed.paid_spend)}`} />
       </div>
-
-      <p className="mt-6 text-sm text-[color:var(--text-secondary)] leading-relaxed">
-        April MTD blended MER is <span className="font-semibold text-[color:var(--text-primary)]">{fmtROAS(current)}</span> — below the{" "}
-        <span className="mono">2.5×</span> floor and short of the <span className="mono">3.0×</span> goal. March closed at{" "}
-        <span className="mono font-semibold">{fmtROAS(lastMER)}</span>, so April is tracking{" "}
-        <span className="mono font-semibold text-[color:var(--alert)]">
-          {((lastMER - current) / lastMER * 100).toFixed(0)}%
-        </span>{" "}
-        behind last month&apos;s close.
-      </p>
     </div>
   );
 }

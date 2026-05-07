@@ -42,6 +42,17 @@ MER_FLOOR = 2.5
 MER_GOAL = 3.0
 
 
+def load_client_overrides(slug: str) -> dict:
+    """Load per-client report config (floor/goal) if it exists."""
+    cfg = WORKSPACE_ROOT / "clients" / slug / "configs" / "mtd_report.json"
+    if cfg.exists():
+        try:
+            return json.loads(cfg.read_text())
+        except Exception:
+            return {}
+    return {}
+
+
 def fmt_money(n: float) -> str:
     return f"${n:,.0f}"
 
@@ -95,7 +106,8 @@ def build_google_block(label: str, range_label: str, w: dict) -> str:
 
 def render_data_ts(slug: str, report_month: str, as_of: str,
                    meta: dict, google: dict, shopify: dict,
-                   narrative: dict, client_name: str) -> str:
+                   narrative: dict, client_name: str,
+                   mer_floor: float = MER_FLOOR, mer_goal: float = MER_GOAL) -> str:
     mtd = meta["windows"]["mtd"]
     mtd_google = google.get("windows", {}).get("mtd", {"spend":0,"revenue":0,"roas":0,"conversions":0,"clicks":0,"impressions":0,"cpc":0,"ctr":0,"since":mtd["since"],"until":mtd["until"]})
 
@@ -107,6 +119,15 @@ def render_data_ts(slug: str, report_month: str, as_of: str,
     date_label = f"{month_full} 1 – {month_full} {day}, {as_of_d.year}"
     generated_at = as_of_d.strftime("%B %-d, %Y")
     report_title = f"{month_full} MTD Report"
+
+    # Generic month labels for components (replaces hardcoded "April MTD" / "March")
+    mtd_label_str = f"{month_short} '{str(as_of_d.year)[-2:]}"
+    mtd_days_int = day
+    prev_month_idx = (as_of_d.month - 2) % 12 + 1
+    prev_year = as_of_d.year - 1 if as_of_d.month == 1 else as_of_d.year
+    prev_label_str = f"{calendar.month_name[prev_month_idx]}"
+    # Days in previous calendar month
+    prev_days_int = calendar.monthrange(prev_year, prev_month_idx)[1]
 
     # Ranges for each window
     ranges = {
@@ -293,6 +314,51 @@ def render_data_ts(slug: str, report_month: str, as_of: str,
     worked_ts = "[\n" + ",\n".join(render_work_item(it) for it in narrative.get("worked", [])) + "\n]"
     didnt_ts = "[\n" + ",\n".join(render_work_item(it) for it in narrative.get("didnt_work", [])) + "\n]"
 
+    # ── Strategic moves (deck-mode WorkedLists) — emit empty arrays if narrative
+    # doesn't supply them so build never fails. Operator/agent fills in later.
+    def render_move(m):
+        parts = [f'title: {json.dumps(m.get("title", ""))}']
+        if m.get("stat") is not None:
+            parts.append(f'stat: {json.dumps(m["stat"])}')
+        if m.get("detail") is not None:
+            parts.append(f'detail: {json.dumps(m["detail"])}')
+        return "  { " + ", ".join(parts) + " }"
+
+    worked_moves_arr = narrative.get("worked_moves", [])
+    didnt_moves_arr = narrative.get("didnt_moves", [])
+    worked_moves_ts = "[\n" + ",\n".join(render_move(m) for m in worked_moves_arr) + ("\n]" if worked_moves_arr else "]")
+    didnt_moves_ts = "[\n" + ",\n".join(render_move(m) for m in didnt_moves_arr) + ("\n]" if didnt_moves_arr else "]")
+
+    # ── Top performers (deck-mode TopPerformers) — empty if narrative doesn't
+    # supply. Hand-curated per-report from an ad-level Meta pull.
+    def render_top(p):
+        parts = [
+            f'rank: {int(p.get("rank", 0))}',
+            f'adId: {json.dumps(str(p.get("adId", "")))}',
+            f'label: {json.dumps(p.get("label", ""))}',
+            f'rawAdName: {json.dumps(p.get("rawAdName", ""))}',
+            f'campaignName: {json.dumps(p.get("campaignName", ""))}',
+            f'formatBadge: {json.dumps(p.get("formatBadge", "Static"))}',
+            f'launchDate: {json.dumps(p.get("launchDate", ""))}',
+            f'imageSrc: {json.dumps(p.get("imageSrc", ""))}',
+            f'spend: {float(p.get("spend", 0)):.2f}',
+            f'roas: {float(p.get("roas", 0)):.4f}',
+            f'cpc: {float(p.get("cpc", 0)):.4f}',
+        ]
+        if p.get("note"):
+            parts.append(f'note: {json.dumps(p["note"])}')
+        if p.get("honorable"):
+            parts.append("honorable: true")
+        return "  { " + ", ".join(parts) + " }"
+
+    top_arr = narrative.get("top_performers", [])
+    top_window = narrative.get("top_performers_window", {"label": "Last 30 days", "range": ""})
+    top_performers_ts = "[\n" + ",\n".join(render_top(p) for p in top_arr) + ("\n]" if top_arr else "]")
+    top_window_ts = (
+        f"{{ label: {json.dumps(top_window.get('label', 'Last 30 days'))}, "
+        f"range: {json.dumps(top_window.get('range', ''))} }}"
+    )
+
     # ── MTD Shopify block
     mtd_shop_ts = (
         f"{{ range: {json.dumps(mtd_shop.get('range_label') or ranges['mtd'])}, "
@@ -306,7 +372,7 @@ def render_data_ts(slug: str, report_month: str, as_of: str,
         "shopify_mtd_note",
         "Shopify MTD net sales provided by the operator at pull time."
         if not mtd_shop.get("estimated")
-        else "Shopify MTD is an estimate (API not connected) derived from the last closed month's paid-to-store ratio. The operator can confirm the actual number from Shopify admin."
+        else "Shopify MTD is an estimate (API not connected) derived from the last closed month's paid-to-store ratio. The client can confirm the exact number from Shopify admin."
     )
 
     # ── Build data.ts
@@ -319,12 +385,19 @@ export const meta = {{
   report_title: {json.dumps(report_title)},
   date_label: {json.dumps(date_label)},
   generated_at: {json.dumps(generated_at)},
+  as_of: {json.dumps(as_of)},
   prepared_for: "Client",
   prepared_by: "Media Made Simple",
 }};
 
-export const mer_floor = {MER_FLOOR};
-export const mer_goal = {MER_GOAL};
+export const mer_floor = {mer_floor};
+export const mer_goal = {mer_goal};
+
+// Generic month labels — used by OneTable, MERContextChart, etc.
+export const mtd_label = {json.dumps(mtd_label_str)};
+export const mtd_days = {mtd_days_int};
+export const prev_label = {json.dumps(prev_label_str)};
+export const prev_days = {prev_days_int};
 
 // ——————————————————————————————————————————————————————————————
 // Meta Ads — per-window
@@ -463,6 +536,40 @@ export type WorkItem = {{ channel: "Meta" | "Google"; name: string; friendly: st
 
 export const worked: WorkItem[] = {worked_ts};
 export const didnt_work: WorkItem[] = {didnt_ts};
+
+// ——————————————————————————————————————————————————————————————
+// Strategic moves (deck-mode WorkedLists)
+// Empty arrays are valid — page.tsx will render placeholders.
+// ——————————————————————————————————————————————————————————————
+
+export type Move = {{ title: string; stat?: string; detail?: string }};
+
+export const worked_moves: Move[] = {worked_moves_ts};
+export const didnt_moves: Move[] = {didnt_moves_ts};
+
+// ——————————————————————————————————————————————————————————————
+// Top Performers · ad-level (deck-mode TopPerformers)
+// Hand-curated from /tmp/pull_top_ads.py output. Images live under public/top-performers/.
+// ——————————————————————————————————————————————————————————————
+
+export type TopPerformer = {{
+  rank: number;
+  adId: string;
+  label: string;
+  rawAdName: string;
+  campaignName: string;
+  formatBadge: "Flex Ad" | "Static" | "Video" | "Dynamic";
+  launchDate: string;
+  imageSrc: string;
+  spend: number;
+  roas: number;
+  cpc: number;
+  note?: string;
+  honorable?: boolean;
+}};
+
+export const top_performers_window = {top_window_ts};
+export const top_performers: TopPerformer[] = {top_performers_ts};
 
 // ——————————————————————————————————————————————————————————————
 // Helpers
@@ -698,6 +805,11 @@ def main():
     client_json = json.loads((WORKSPACE_ROOT / "clients" / args.slug / "client.json").read_text())
     client_name = client_json.get("name", args.slug)
 
+    # Load per-client report config (mer_floor / mer_goal)
+    overrides = load_client_overrides(args.slug)
+    floor = float(overrides.get("mer_floor", MER_FLOOR))
+    goal = float(overrides.get("mer_goal", MER_GOAL))
+
     narrative = auto_narrative(meta, google)
     if args.narrative:
         override = json.loads(Path(args.narrative).read_text())
@@ -724,7 +836,8 @@ def main():
 
     # Overwrite dynamic files
     (app_dir / "src" / "lib" / "data.ts").write_text(
-        render_data_ts(args.slug, args.report_month, meta["as_of"], meta, google, shopify, narrative, client_name)
+        render_data_ts(args.slug, args.report_month, meta["as_of"], meta, google, shopify, narrative, client_name,
+                       mer_floor=floor, mer_goal=goal)
     )
     (app_dir / "src" / "app" / "globals.css").write_text(
         render_globals_css(brand["palette"], brand["font_family"])

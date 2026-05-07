@@ -24,6 +24,13 @@ const data = reach_history.map((r) => ({
   partial: !!r.partial,
 }));
 
+// Derive mini-stats from reach_history so the component stays generic.
+const closedHistory = reach_history.filter((r) => !r.partial);
+const peakMonth = closedHistory.reduce((a, b) => (b.pct_new > a.pct_new ? b : a), closedHistory[0]);
+const biggestExpansion = closedHistory.reduce((a, b) => (b.net_new > a.net_new ? b : a), closedHistory[0]);
+const lastClosed = closedHistory[closedHistory.length - 1];
+const currentMonth = reach_history[reach_history.length - 1];
+
 const CHART_COLORS = {
   previously: "#4A90D4",  // river-blue
   netNew: "#4FB8A4",      // teal-sage
@@ -148,15 +155,33 @@ export default function NetNewReachChart() {
       </div>
 
       <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <MiniStat label="Peak month (% net new)" value="Sep '25" sub="75.5% net new" />
-        <MiniStat label="Biggest expansion" value="Jan '26" sub="286K new people" />
-        <MiniStat label="Last closed (Mar '26)" value="51.8%" sub="net new share" />
-        <MiniStat label="Apr MTD" value="41.2%" sub="lowest in 10 months" alert />
+        <MiniStat
+          label="Peak month (% net new)"
+          value={peakMonth.label}
+          sub={`${peakMonth.pct_new.toFixed(1)}% net new`}
+        />
+        <MiniStat
+          label="Biggest expansion"
+          value={biggestExpansion.label}
+          sub={`${Math.round(biggestExpansion.net_new / 1000)}K new people`}
+        />
+        <MiniStat
+          label={`Last closed (${lastClosed.label})`}
+          value={`${lastClosed.pct_new.toFixed(1)}%`}
+          sub="net new share"
+          alert={lastClosed.pct_new < 50}
+        />
+        <MiniStat
+          label={`${currentMonth.label} MTD`}
+          value={`${currentMonth.pct_new.toFixed(1)}%`}
+          sub={currentMonth.partial ? "partial · directional" : "net new share"}
+          alert={currentMonth.pct_new < 50}
+        />
       </div>
 
       <div className="mt-5 rounded-xl border border-[color:var(--warning)]/30 bg-[color:var(--warning-soft)]/60 p-4 text-sm text-[color:var(--text-secondary)] leading-relaxed">
         <strong className="text-[color:var(--text-primary)]">Why this chart matters. </strong>
-        A high share of <em>net new</em> reach means we&apos;re still finding fresh audience each month. A falling share means we&apos;re recycling through the same people — creative fatigue and market saturation start to compound, MER compresses, and CAC drifts up. Track your client&apos;s net-new share month over month — a drop here often precedes MER compression by 30–60 days. The fix: fresh creative angles to unlock cold audiences, not just rotation of existing ones.
+        A high share of <em>net new</em> reach means we&apos;re still finding fresh audience each month. A falling share means we&apos;re recycling through the same people — creative fatigue and market saturation start to compound, MER compresses, and CAC drifts up. The fix when this share keeps sliding is structural: fresh creative angles to unlock cold audiences, not rotation of the existing winners.
       </div>
     </div>
   );

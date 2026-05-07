@@ -12,25 +12,32 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { mer_floor, mer_goal } from "@/lib/data";
+import { mer_floor, mer_goal, meta_mtd, google_mtd, mtd_mer } from "@/lib/data";
 
 const META = "#7A825F";     // sage
 const GOOGLE = "#3E6B73";   // river
 const BLEND = "#5A6345";    // sage-deep
 
+// Spend / revenue mix — both wired to the MTD pulls from data.ts.
 const spendShare = [
-  { name: "Meta", value: 14592, color: META },
-  { name: "Google", value: 2482, color: GOOGLE },
+  { name: "Meta", value: meta_mtd.spend, color: META },
+  { name: "Google", value: google_mtd.spend, color: GOOGLE },
 ];
 const revenueShare = [
-  { name: "Meta", value: 28651, color: META },
-  { name: "Google", value: 7918, color: GOOGLE },
+  { name: "Meta", value: meta_mtd.revenue, color: META },
+  { name: "Google", value: google_mtd.revenue, color: GOOGLE },
 ];
+
+// Per-channel bars are platform-reported (paid-attributed) ROAS.
+// The Blended bar uses MER (Shopify ÷ paid spend) so it matches the hero number.
+// Otherwise the report contradicts itself — see LESSONS.md.
 const roasData = [
-  { channel: "Meta", roas: 1.96 },
-  { channel: "Google", roas: 3.19 },
-  { channel: "Blended", roas: 2.14 },
+  { channel: "Meta", roas: meta_mtd.roas },
+  { channel: "Google", roas: google_mtd.roas },
+  { channel: "Blended (MER)", roas: mtd_mer },
 ];
+
+const roasMax = Math.max(mer_goal + 0.5, ...roasData.map((d) => d.roas)) + 0.2;
 
 export default function ChannelMixChart() {
   return (
@@ -128,7 +135,7 @@ function RoasPanel() {
               tickLine={false}
               tickFormatter={(v) => `${v}x`}
               width={36}
-              domain={[0, 4]}
+              domain={[0, roasMax]}
             />
             <Tooltip
               cursor={{ fill: "rgba(122,130,95,0.08)" }}
@@ -165,8 +172,8 @@ function RoasPanel() {
         </ResponsiveContainer>
       </div>
       <div className="mt-2 flex justify-between text-[10px] mono text-[color:var(--text-tertiary)] uppercase tracking-wider">
-        <span>Dashed = 2.5 floor</span>
-        <span>Solid = 3.0 goal</span>
+        <span>Dashed = {mer_floor.toFixed(1)} floor</span>
+        <span>Solid = {mer_goal.toFixed(1)} goal</span>
       </div>
     </div>
   );
